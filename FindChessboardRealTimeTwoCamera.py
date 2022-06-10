@@ -110,6 +110,8 @@ imgpts2 = []
 rvec2 = []
 final_pos = [0, 0, 0]
 starting_pos = [0, 0, 0]
+final_tvec = 0
+final_rvec = 0
 while True:
     retr1 = 2000.6
     retr2 = 2000.7
@@ -248,6 +250,8 @@ while True:
                     cv2.imshow('img', img)
                     cv2.imshow('img2', img2)
                     cv2.waitKey(1)
+                    final_tvec = tvec
+                    final_rvec = rvec
                     # if dst != []:
                     # cv2.imshow("dst", dst)
                 else:
@@ -375,10 +379,16 @@ while True:
                 retr2, mtx2, dist2, rvecs2, tvecs2 = cv2.calibrateCamera(objpoints, imgpoints2, gray2.shape[::-1], None, None)
                 tvec, rvec, retr = modify_details(retr1, rvecs, tvecs)
                 tvec2, rvec2, retr2 = modify_details(retr2, rvecs2, tvecs2)
-                print("In dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2, "\ntvec: ", tvec, "\ntvec2: ", tvec2)
+                if final_tvec and final_rvec:
+                    print("In dead Zone\nfinal_rvec: ", final_rvec, "\nrvec: ", rvec, "\nrvec2: ", rvec2, "\ntvec2: ", tvec2, "\nFinal tvec: ", final_tvec, "\ntvec: ", tvec)
+                    print("Rotation Error: ", (abs(final_rvec[0] - rvec[0]) + abs(final_rvec[1] - rvec[1]) + abs(final_rvec[2] - rvec[2])) / 3)
+                    print("Translation Error: ", (abs(final_tvec[0] - tvec[0]) + abs(final_tvec[1] - tvec[1]) + abs(final_tvec[2] - tvec[2])) / 3)
+                else:
+                    print("In dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2, "\ntvec: ", tvec, "\ntvec2: ", tvec2)
 
                 sf_x_rot, sf_y_rot, sf_z_rot = rvec[0] - rvec2[0], rvec[1] - rvec2[1], rvec[2] - rvec2[2]
                 sf_x_tra, sf_y_tra, sf_z_tra = tvec[0] - tvec2[0], tvec[1] - tvec2[1], tvec[2] - tvec2[2]
+
                 details_rotation.append([sf_x_rot, sf_y_rot, sf_z_rot])
                 details_translation.append([sf_x_tra, sf_y_tra, sf_z_tra])
             else:  # Out of Dead Zone
