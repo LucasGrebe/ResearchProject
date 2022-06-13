@@ -99,9 +99,9 @@ details_rotation = []
 # Used to average all the subtraction factors for translation
 details_translation = []
 # Formatted Rotation Vector
-rvec = []
+rvec = [1000, 1000, 1000]
 # Formatted Translation Vector
-tvec = []
+tvec = [1000, 1000, 1000]
 # Projected image point of camera one
 imgpts = []
 # projected image points of camera 2
@@ -112,9 +112,16 @@ final_pos = [0, 0, 0]
 starting_pos = [0, 0, 0]
 final_tvec = 0
 final_rvec = 0
+retr1 = 2000.6
+retr2 = 2000.7
+experiment_1 = False
+min_x_camera1 = 0
+max_x_camera1 = 0
+experiment_2 = False
+min_x_camera2 = 0
+max_x_camera2 = 0
+count4 = 0
 while True:
-    retr1 = 2000.6
-    retr2 = 2000.7
     # print("1")
     t = clock()
     _ret, img = cam.read()
@@ -152,12 +159,14 @@ while True:
             imgpoints2 = []
         # print("3")
         # refining pixel coordinates for given 2d points.
-        if ret:
-            corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-            imgpoints.append(corners2)
-        if ret2:
-            cornerss2 = cv2.cornerSubPix(gray2, cornerss, (11, 11), (-1, -1), criteria)
-            imgpoints2.append(cornerss2)
+        if not experiment_2:
+            if ret:
+                corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+                imgpoints.append(corners2)
+        if not experiment_1:
+            if ret2:
+                cornerss2 = cv2.cornerSubPix(gray2, cornerss, (11, 11), (-1, -1), criteria)
+                imgpoints2.append(cornerss2)
         # print("4")
         # first_one = False
         # second_one = False
@@ -177,6 +186,10 @@ while True:
                 # if not count:
                 tvec, rvec, retr1 = modify_details(retr1, rvecs, tvecs)
                 # print("total error: {}".format(mean_error / len(objpoints)))
+                if rvec[0] < min_x_camera1:
+                    min_x_camera1 = rvec[0]
+                if rvec[0] > max_x_camera1:
+                    max_x_camera1 = rvec[0]
                 img = draw(img, imgpts)
                 dt = clock() - t
                 draw_str(img, (480, 20), 'time: %.1f ms' % (dt * 1000))
@@ -187,6 +200,8 @@ while True:
                 draw_str(img, (20, 100), 'y pos: ' + str(tvec[1]))
                 draw_str(img, (20, 120), 'z pos: ' + str(tvec[2]))
                 draw_str(img, (20, 140), 'RMS Error: ' + str(retr1))
+                draw_str(img, (20, 160), 'min_x_camera1: ' + str(min_x_camera1))
+                draw_str(img, (20, 180), 'max_x_camera1: ' + str(max_x_camera1))
                 cv2.imshow('img', img)
                 cv2.imshow('img2', img2)
                 cv2.waitKey(1)
@@ -215,6 +230,7 @@ while True:
                 # if not count:
                 tvec, rvec, retr2 = modify_details(retr2, rvecs2, tvecs2)
                 if cross_over:
+                    print("Cross Over Start")
                     # sf_x = rvec[0] - sf_x
                     # sf_y = rvec[1] - sf_y
                     # sf_z = rvec[2] - sf_z
@@ -227,10 +243,18 @@ while True:
                 if starting_pos[0]:
                     sf_z_tra, sf_y_tra, sf_x_tra = starting_pos[0] - tvec[0], starting_pos[1] - tvec[1], starting_pos[2] - tvec[2]
                 # print("total error: {}".format(mean_error / len(objpoints)))
-                rvec = rvec[0] - sf_x_rot, rvec[1] - sf_y_rot, rvec[2] - sf_z_rot
+                if rvec[0] < min_x_camera2:
+                    min_x_camera2 = rvec[0]
+                if rvec[0] > max_x_camera2:
+                    max_x_camera2 = rvec[0]
+                temp_rvec = rvec
+                rvec = rvec[0] + sf_x_rot, rvec[1] - sf_y_rot, rvec[2] - sf_z_rot
                 tvec = final_pos[0] - sf_x_tra, final_pos[1] - sf_y_tra, final_pos[2] - sf_z_tra
-                print("Rotation Vector\nx: ", rvec[0], "y: ", rvec[1], "z: ", (rvec[2]))
-                print("Translation Vector\nx: ", tvec[0], "y: ", tvec[1], "z: ", (tvec[2]))
+                count4 = counter(count4, 20)
+                if not count4:
+                    print("Rotation Vector - Local to Camera 2\nx: ", temp_rvec[0], "y: ", temp_rvec[1], "z: ", temp_rvec[2])
+                    print("Rotation Vector - Local to Camera 1\nx: ", rvec[0], "y: ", rvec[1], "z: ", rvec[2], "subtraction factor x: ", sf_x_rot, "subtraction factor y: ", sf_y_rot, "subtraction factor z: ", sf_z_rot)
+                # print("Translation Vector\nx: ", tvec[0], "y: ", tvec[1], "z: ", (tvec[2]))
                 img2 = draw(img2, imgpts2)
                 dt = clock() - t
                 draw_str(img2, (480, 20), 'time: %.1f ms' % (dt * 1000))
@@ -241,6 +265,8 @@ while True:
                 draw_str(img2, (20, 100), 'y pos: ' + str(tvec[1]))
                 draw_str(img2, (20, 120), 'z pos: ' + str(tvec[2]))
                 draw_str(img2, (20, 140), 'RMS Error: ' + str(retr2))
+                draw_str(img2, (20, 160), 'min_x_camera2: ' + str(min_x_camera2))
+                draw_str(img2, (20, 180), 'max_x_camera2: ' + str(max_x_camera2))
                 draw_str(img2, (480, 60), "x: " + str(sf_x_rot))
                 draw_str(img2, (480, 80), "y: " + str(sf_y_rot))
                 draw_str(img2, (480, 100), "z: " + str(sf_z_rot))
@@ -255,19 +281,21 @@ while True:
                 # if dst != []:
                 # cv2.imshow("dst", dst)
             else:
+                # print("Here", retr2)
                 RMS_two = True
             # print("5")
         else:
             pass
             # print("not bad")
             # _, rvec, tvec= cv2.solvePnP(objp, corners2, mtx, dist)
-        if RMS_one:
-            print("RMS Error Too Large One: ", retr1, retr2)
-        if RMS_two:
-            print("RMS Error Too Large Two: ", retr2, retr1)
+        # if RMS_one:
+        #     print("RMS Error Too Large One: ", retr1, retr2)
+        # if RMS_two:
+        #     print("RMS Error Too Large Two: ", retr2, retr1)
 
         # print("Here1", RMS_one, RMS_two)
-        if RMS_one and RMS_two:
+        # print("Here", retr1, retr2)
+        if RMS_one and RMS_two and retr1 < 2000 and retr2 < 2000:
             # print("Here2", RMS_one, RMS_two)
             dt = clock() - t
             if retr1 < retr2:
@@ -297,11 +325,11 @@ while True:
             cv2.imshow('img', img)
             cv2.imshow('img2', img2)
             cv2.waitKey(1)
-            print("Dead Zone")
+            # print("Dead Zone")
             count2 = 1
-            count3 = 1
+            # count3 = 1
             out_of_dead_zone = False
-            print(len(imgpoints), len(imgpoints2))
+            # print(len(imgpoints), len(imgpoints2))
 
             while len(imgpoints) < 6 or len(imgpoints2) < 6:
                 t = clock()
@@ -324,7 +352,7 @@ while True:
                                                            cv2.CALIB_CB_ADAPTIVE_THRESH
                                                            + cv2.CALIB_CB_FAST_CHECK +
                                                            cv2.CALIB_CB_NORMALIZE_IMAGE)
-                print(len(imgpoints), len(imgpoints2))
+                # print(len(imgpoints), len(imgpoints2))
                 if len(imgpoints2) == 6 or len(imgpoints) == 6:
                     count2 = counter(count2, 20)
                     if not count2:
@@ -344,6 +372,9 @@ while True:
                 cv2.imshow('img', img)
                 cv2.imshow('img2', img2)
                 cv2.waitKey(1)
+                count = counter(count, 5)
+                if not count:
+                    print("Here", retr1, retr2)
             if not out_of_dead_zone:  # In Dead Zone
                 # n = [
                 #     retval,
@@ -384,7 +415,10 @@ while True:
                     print("Rotation Error: ", (abs(final_rvec[0] - rvec[0]) + abs(final_rvec[1] - rvec[1]) + abs(final_rvec[2] - rvec[2])) / 3)
                     print("Translation Error: ", (abs(final_tvec[0] - tvec[0]) + abs(final_tvec[1] - tvec[1]) + abs(final_tvec[2] - tvec[2])) / 3)
                 else:
-                    print("In dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2, "\ntvec: ", tvec, "\ntvec2: ", tvec2)
+                    count = counter(count, 3)
+                    if not count:
+                        print("In dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2)
+                    # print("tvec: ", tvec, "\ntvec2: ", tvec2)
 
                 sf_x_rot, sf_y_rot, sf_z_rot = rvec[0] - rvec2[0], rvec[1] - rvec2[1], rvec[2] - rvec2[2]
                 sf_x_tra, sf_y_tra, sf_z_tra = tvec[0] - tvec2[0], tvec[1] - tvec2[1], tvec[2] - tvec2[2]
@@ -394,8 +428,8 @@ while True:
             else:  # Out of Dead Zone
                 RMS_one = False
                 RMS_two = False
-                if rvec != [] and rvec2 != []:
-                    print("Out of dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2)
+                if rvec != [0, 0, 0] and rvec2 != [0, 0, 0]:
+                    print("Out of dead Zone\nrvec: ", rvec, "\nrvec2: ", rvec2, "\n\n")
                     cross_over = True
                 to_avg_x = 0
                 to_avg_y = 0
@@ -419,7 +453,8 @@ while True:
                 sf_x_tra, sf_y_tra, sf_z_tra = to_avg_x / to_avg_count, to_avg_y / to_avg_count, to_avg_z / to_avg_count
                 final_pos = tvec
         elif retr1 < RMS_thresh and retr2 < RMS_thresh:
-            print("Shared Zone")
+            print("HHHH\n\n\n\n")
+            cv2.waitKey(0)
             # h, w = img.shape[:2]
             # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
             # dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
