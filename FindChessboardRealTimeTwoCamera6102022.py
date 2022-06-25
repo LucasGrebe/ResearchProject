@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from common import draw_str, clock
+from preset.common import draw_str, clock
 
 
 def counter(countera, threshold):

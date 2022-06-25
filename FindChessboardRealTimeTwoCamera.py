@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from common import draw_str, clock
+from preset.common import draw_str, clock
 
 
 def counter(countera, threshold):
@@ -51,8 +51,8 @@ def modify_details(ret11, rvecs11, tvecs11):
 # second_one = False
 
 
-cam = cv2.VideoCapture(0)
-cam2 = cv2.VideoCapture(1)
+cam = cv2.VideoCapture(2)
+cam2 = cv2.VideoCapture(0)
 
 # Defining the dimensions of checkerboard
 CHECKERBOARD = (9, 6)
@@ -81,7 +81,7 @@ RMS_one = False
 # Is the error of camera two greater than RMS_thresh?
 RMS_two = False
 # subtraction factor of the x rotation, from camera one to two
-sf_x_rot = 0
+sf_x_rot = 90
 # subtraction factor of the y rotation, from camera one to two
 sf_y_rot = 0
 # subtraction factor of the z rotation, from camera one to two

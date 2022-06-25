@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from common import draw_str, clock
+from preset.common import draw_str, clock
 
 
 def counter(countera, threshold):
@@ -81,7 +81,8 @@ RMS_one = False
 # Is the error of camera two greater than RMS_thresh?
 RMS_two = False
 # subtraction factor of the x rotation, from camera one to two
-sf_x_rot = 0
+sf_x_rot = 90
+print(sf_x_rot)
 # subtraction factor of the y rotation, from camera one to two
 sf_y_rot = 0
 # subtraction factor of the z rotation, from camera one to two
@@ -202,6 +203,7 @@ while True:
                 draw_str(img, (20, 140), 'RMS Error: ' + str(retr1))
                 draw_str(img, (20, 160), 'min_x_camera1: ' + str(min_x_camera1))
                 draw_str(img, (20, 180), 'max_x_camera1: ' + str(max_x_camera1))
+                draw_str(img, (20, 200), 'max_range_with_2_cameras: ' + str(max_x_camera1 - min_x_camera2))
                 cv2.imshow('img', img)
                 cv2.imshow('img2', img2)
                 cv2.waitKey(1)
@@ -243,13 +245,15 @@ while True:
                 if starting_pos[0]:
                     sf_z_tra, sf_y_tra, sf_x_tra = starting_pos[0] - tvec[0], starting_pos[1] - tvec[1], starting_pos[2] - tvec[2]
                 # print("total error: {}".format(mean_error / len(objpoints)))
+                temp_rvec = rvec
+                rvec = rvec[0] - sf_x_rot, rvec[1] - sf_y_rot, rvec[2] - sf_z_rot
+                tvec = final_pos[0] - sf_x_tra, final_pos[1] - sf_y_tra, final_pos[2] - sf_z_tra
+
                 if rvec[0] < min_x_camera2:
                     min_x_camera2 = rvec[0]
                 if rvec[0] > max_x_camera2:
                     max_x_camera2 = rvec[0]
-                temp_rvec = rvec
-                rvec = rvec[0] + sf_x_rot, rvec[1] - sf_y_rot, rvec[2] - sf_z_rot
-                tvec = final_pos[0] - sf_x_tra, final_pos[1] - sf_y_tra, final_pos[2] - sf_z_tra
+
                 count4 = counter(count4, 20)
                 if not count4:
                     print("Rotation Vector - Local to Camera 2\nx: ", temp_rvec[0], "y: ", temp_rvec[1], "z: ", temp_rvec[2])
@@ -257,6 +261,7 @@ while True:
                 # print("Translation Vector\nx: ", tvec[0], "y: ", tvec[1], "z: ", (tvec[2]))
                 img2 = draw(img2, imgpts2)
                 dt = clock() - t
+                print(sf_x_rot)
                 draw_str(img2, (480, 20), 'time: %.1f ms' % (dt * 1000))
                 draw_str(img2, (20, 20), 'x rot: ' + str(rvec[0]))
                 draw_str(img2, (20, 40), 'y rot: ' + str(rvec[1]))
@@ -267,6 +272,7 @@ while True:
                 draw_str(img2, (20, 140), 'RMS Error: ' + str(retr2))
                 draw_str(img2, (20, 160), 'min_x_camera2: ' + str(min_x_camera2))
                 draw_str(img2, (20, 180), 'max_x_camera2: ' + str(max_x_camera2))
+                draw_str(img2, (20, 200), 'max_range_with_2_cameras: ' + str(max_x_camera1 - min_x_camera2))
                 draw_str(img2, (480, 60), "x: " + str(sf_x_rot))
                 draw_str(img2, (480, 80), "y: " + str(sf_y_rot))
                 draw_str(img2, (480, 100), "z: " + str(sf_z_rot))
@@ -365,10 +371,28 @@ while True:
                     cornerss2 = cv2.cornerSubPix(gray2, cornerss, (11, 11), (-1, -1), criteria)
                     imgpoints2.append(cornerss2)
                 dt = clock() - t
+                img = draw(img, imgpts)
+                draw_str(img, (480, 20), 'time: %.1f ms' % (dt * 1000))
+                draw_str(img, (20, 20), 'x rot: ' + str(rvec[0]))
+                draw_str(img, (20, 40), 'y rot: ' + str(rvec[1]))
+                draw_str(img, (20, 60), 'z rot: ' + str(rvec[2]))
+                draw_str(img, (20, 80), 'x pos: ' + str(tvec[0]))
+                draw_str(img, (20, 100), 'y pos: ' + str(tvec[1]))
+                draw_str(img, (20, 120), 'z pos: ' + str(tvec[2]))
+                draw_str(img, (20, 140), 'RMS Error: ' + str(retr1))
                 draw_str(img, (480, 20), 'time: %.1f ms' % (dt * 1000))
                 draw_str(img2, (480, 20), 'time: %.1f ms' % (dt * 1000))
                 draw_str(img, (480, 40), 'Dead Zone')
                 draw_str(img2, (480, 40), 'Dead Zone')
+                img2 = draw(img2, imgpts2)
+                draw_str(img2, (480, 20), 'time: %.1f ms' % (dt * 1000))
+                draw_str(img2, (20, 20), 'x rot: ' + str(rvec[0]))
+                draw_str(img2, (20, 40), 'y rot: ' + str(rvec[1]))
+                draw_str(img2, (20, 60), 'z rot: ' + str(rvec[2]))
+                draw_str(img2, (20, 80), 'x pos: ' + str(tvec[0]))
+                draw_str(img2, (20, 100), 'y pos: ' + str(tvec[1]))
+                draw_str(img2, (20, 120), 'z pos: ' + str(tvec[2]))
+                draw_str(img2, (20, 140), 'RMS Error: ' + str(retr2))
                 cv2.imshow('img', img)
                 cv2.imshow('img2', img2)
                 cv2.waitKey(1)
@@ -453,8 +477,7 @@ while True:
                 sf_x_tra, sf_y_tra, sf_z_tra = to_avg_x / to_avg_count, to_avg_y / to_avg_count, to_avg_z / to_avg_count
                 final_pos = tvec
         elif retr1 < RMS_thresh and retr2 < RMS_thresh:
-            print("HHHH\n\n\n\n")
-            cv2.waitKey(0)
+            print("HHHH\n\n\n\n", RMS_thresh, RMS_thresh)
             # h, w = img.shape[:2]
             # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
             # dst = cv2.undistort(img, mtx, dist, None, newcameramtx)

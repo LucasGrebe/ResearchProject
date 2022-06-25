@@ -14,7 +14,7 @@ import cv2 as cv
 import math
 
 
-from common import clock, draw_str
+from preset.common import clock, draw_str
 
 # local modules
 

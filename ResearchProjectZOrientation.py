@@ -12,9 +12,8 @@ import cv2 as cv
 import imutils
 import mediapipe as mp
 import numpy as np
-import random
 
-from common import clock, draw_str
+from preset.common import clock, draw_str
 
 # local modules
 
